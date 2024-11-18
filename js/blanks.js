@@ -334,7 +334,7 @@ H5P.Blanks = (function ($, Question) {
        */
       let resizeTimer;
       new ResizeObserver(function () {
-        // To avoid triggering resize too often, we wait a second after the last 
+        // To avoid triggering resize too often, we wait a second after the last
         // resize event has been received
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function () {
@@ -873,6 +873,50 @@ H5P.Blanks = (function ($, Question) {
     setTimeout(function () {
       $input.focus();
     }, 1);
+  };
+
+  /**
+   * Set current state.
+   * @param {string[]} state State to set, must match return value structure of getCurrentState.
+   */
+  Blanks.prototype.setCurrentState = function (state) {
+    state = this.sanitizeState(state);
+    this.hideEvaluation();
+    this.hideSolutions();
+    this.clozes.forEach((cloze, index) => {
+      if (state[index] !== undefined) {
+        cloze.setUserInput(state[index]);
+      }
+      else {
+        cloze.setUserInput('');
+      }
+    });
+    this.removeMarkedResults();
+    this.toggleButtonVisibility(STATE_ONGOING);
+    this.resetGrowTextField();
+    this.toggleAllInputs(true);
+    this.answered = false; // getAnswerGiven uses current state of this.answered
+    this.answered = this.getAnswerGiven();
+    this.done = false;
+  };
+
+  /**
+   * Sanitize state.
+   * @param {string[]} state State.
+   * @returns {string[]} Sanitized state.
+   */
+  Blanks.prototype.sanitizeState = function (state) {
+    const clozesLength = this.clozes.length;
+
+    // Ensure state is an array of the correct length
+    if (!Array.isArray(state)) {
+      return new Array(clozesLength).fill('');
+    }
+
+    // Sanitize state and adjust length
+    return Array.from({ length: clozesLength }, (_, i) => {
+      return (typeof state[i] === 'string') ? state[i] : '';
+    });
   };
 
   /**
