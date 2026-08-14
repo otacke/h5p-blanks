@@ -117,6 +117,9 @@
           "label": "Habilitar \"Reintentar\""
         },
         {
+          "label": "Allow \"Retry\" even if all answers were correct"
+        },
+        {
           "label": "Habilitar botón para \"Mostrar solución\""
         },
         {
@@ -143,7 +146,7 @@
           "label": "Mostrar diálogo de confirmación en \"Reintentar\""
         },
         {
-          "label": "Aceptar errores tipográficos menores",
+          "label": "Aceptar errores ortográficos menores",
           "description": "Si se activa, una respuesta también contará como correcta con errores tipográficos menores (3-9 caracteres: 1 error tipográfico, más de 9 caracteres: 2 errores tipográficos)"
         }
       ]
