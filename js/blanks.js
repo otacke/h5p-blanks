@@ -47,7 +47,7 @@ H5P.Blanks = (function ($, Question) {
     var self = this;
 
     // Inheritance
-    Question.call(self, 'blanks');
+    Question.call(self, 'blanks', { theme: true });
 
     // IDs
     this.contentId = id;
@@ -76,6 +76,7 @@ H5P.Blanks = (function ($, Question) {
       scoreBarLabel: 'You got :num out of :total points',
       behaviour: {
         enableRetry: true,
+        allowRetryIfCorrect: false,
         enableSolutionsButton: true,
         enableCheckButton: true,
         caseSensitive: true,
@@ -218,6 +219,7 @@ H5P.Blanks = (function ($, Question) {
         },
         textIfSubmitting: self.params.submitAnswer,
         contentData: self.contentData,
+        icon: 'check',
       });
     }
 
@@ -226,6 +228,9 @@ H5P.Blanks = (function ($, Question) {
       self.showCorrectAnswers(false);
     }, self.params.behaviour.enableSolutionsButton, {
       'aria-label': self.params.a11yShowSolution,
+    }, {
+      styleType: 'secondary',
+      icon: 'show-solutions',
     });
 
     // Try again button
@@ -242,7 +247,9 @@ H5P.Blanks = (function ($, Question) {
           l10n: self.params.confirmRetry,
           instance: self,
           $parentElement: $container
-        }
+        },
+        styleType: 'secondary',
+        icon: 'retry',
       });
     }
     self.toggleButtonVisibility(STATE_ONGOING);
@@ -268,7 +275,7 @@ H5P.Blanks = (function ($, Question) {
       if (clozeEnd === -1) {
         continue; // No end
       }
-      var clozeContent = question.substring(clozeStart, clozeEnd);
+      var clozeContent = question.substring(clozeStart, clozeEnd).replaceAll(/<\/?[a-z]*\d?>/ig, '');
       var replacer = '';
       if (clozeContent.length) {
         replacer = handler(self.parseSolution(clozeContent));
@@ -495,7 +502,10 @@ H5P.Blanks = (function ($, Question) {
     }
 
     if (this.params.behaviour.enableRetry) {
-      if ((state === STATE_CHECKING && !allCorrect) || state === STATE_SHOWING_SOLUTION) {
+      const shouldHide = allCorrect && !this.params.behaviour.allowRetryIfCorrect;
+      const shouldShow = !shouldHide && (state !== STATE_ONGOING);
+
+      if (shouldShow) {
         this.showButton('try-again');
       }
       else {
@@ -684,8 +694,9 @@ H5P.Blanks = (function ($, Question) {
    */
   Blanks.prototype.getxAPIDefinition = function () {
     var definition = {};
+    // The below replaceAll makes sure we don't get any unwanted XAPI_PLACEHOLDERs in the description
     definition.description = {
-      'en-US': this.params.text
+      'en-US': this.params.text.replaceAll(/_{10,}/gi, '_________')
     };
     definition.type = 'http://adlnet.gov/expapi/activities/cmi.interaction';
     definition.interactionType = 'fill-in';
@@ -694,7 +705,10 @@ H5P.Blanks = (function ($, Question) {
     let crp = '';
     // xAPI forces us to create solution patterns for all possible solution combinations
     for (var i = 0; i < this.params.questions.length; i++) {
-      var question = this.handleBlanks(this.params.questions[i], function (solution) {
+      // The below replaceAll makes sure we don't get any unwanted XAPI_PLACEHOLDERs in the questions
+      let question = this.params.questions[i].replaceAll(/_{10,}/gi, '_________');
+
+      question = this.handleBlanks(question, function (solution) {
         // Collect all solution combinations for the H5P Alternative extension
         clozeSolutions.push(solution.solutions);
 
